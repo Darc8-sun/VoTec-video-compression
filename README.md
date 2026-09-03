@@ -11,8 +11,8 @@
 [![Stars](https://img.shields.io/github/stars/Darc8-sun/VoTec-video-compression?style=social)](https://github.com/Darc8-sun/VoTec-video-compression/)
 
 <p align="center">
-  <a href=""><b>Paper</b></a> ·
-  <a href=""><b>Project Page</b></a> ·
+  <a href="http://arxiv.org/abs/2609.02291"><b>Paper</b></a> ·
+  <a href="https://darc8-sun.github.io/VoRTec_compress/"><b>Project Page</b></a> ·
   <a href="#-method-overview">Method</a> ·
   <a href="#-results">Results</a> ·
   <a href="#-citation">Citation</a>
@@ -137,12 +137,14 @@ pip install -r requirements.txt
 If you find VoRTeC useful for your research, please cite our work. The BibTeX entry will be updated upon acceptance; a placeholder is provided below:
 
 ```bibtex
-@inproceedings{xia2026vortec,
-  title     = {VoRTeC: Taming Foundation Flow for One-step Real-time Video Compression},
-  author    = {Xia, Yichong and Wu, Qinhong and Chen, Bin and Wang, Jinpeng and Chen, Zeyuan and Wang, Haoqian},
-  booktitle = {Proceedings of the {Conference} on (Venue)},
-  year      = {2026},
-  url       = {https://arxiv.org/abs/XXXX.XXXXX}
+@misc{xia2026vortectamingfoundationflow,
+      title={VoRTeC: Taming Foundation Flow for One-step Real time Video Compression}, 
+      author={Yichong Xia and Qinhong Wu and Bin chen and Jinpeng Wang and Zeyuan Chen and Haoqian Wang},
+      year={2026},
+      eprint={2609.02291},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2609.02291}, 
 }
 ```
 
