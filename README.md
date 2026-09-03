@@ -2,13 +2,13 @@
 
 # VoRTeC: Taming Foundation Flow for One-step Real-time Video Compression
 
-[![arXiv](https://img.shields.io/badge/arXiv-2026.XXXXX-b31b1b.svg)](https://arxiv.org/abs/XXXX.XXXXX)
+[![arXiv](https://img.shields.io/badge/arXiv-2026.XXXXX-b31b1b.svg)](http://arxiv.org/abs/2609.02291)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.4%2B-ee4c2c.svg?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Framework](https://img.shields.io/badge/Built%20on-Wan2.1%201.3B-FF6F00.svg)](https://github.com/Wan-Video/Wan2.1)
 [![Code Status](https://img.shields.io/badge/Code-Partial%20Open--Source-yellow.svg)](#-release-status)
-[![Stars](https://img.shields.io/github/stars/YOUR_USERNAME/VoRTeC?style=social)](https://github.com/YOUR_USERNAME/VoRTeC)
+[![Stars](https://img.shields.io/github/stars/YOUR_USERNAME/VoRTeC?style=social)](https://github.com/Darc8-sun/VoTec-video-compression/)
 
 <p align="center">
   <a href=""><b>Paper</b></a> ·
