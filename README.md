@@ -31,9 +31,10 @@
 
 ## 📢 News
 
+- **[2026-09-23]** &nbsp; 🚀 **Full code release** — The full inference and evaluation pipeline, pre-trained weights, and model inference results are available in this repository as open source.
 - **[2026-09-02]** &nbsp; 🎉 Initial repository created with the **partial open-source release** accompanying the arXiv preprint.
-- **[2026-09-02]** &nbsp; 📝 Paper released on arXiv (link TBD).
-- **[Coming]** &nbsp; 🔓 Full inference code and pretrained weights to be released upon paper acceptance.
+- **[2026-09-02]** &nbsp; 📝 Paper released on arXiv (http://arxiv.org/abs/2609.02291).
+- **[Coming]** &nbsp; 🔓 The complete entropy encoding and decoding pipeline and the checkpoints for the VoRTeC (no lora) will be open-sourced in the near future.
 
 ## ✨ Highlights
 
@@ -111,8 +112,8 @@ Across both FloLPIPS (optical-flow-aware perceptual distance) and warping error 
 
 ```bash
 # 1. Clone this repository
-git clone https://github.com/YOUR_USERNAME/VoRTeC.git
-cd VoRTeC
+git clone https://github.com/Darc8-sun/VoTec-video-compression.git
+cd VoTec-video-compression
 
 # 2. Create a fresh environment
 conda create -n vortec python=3.10 -y
@@ -120,17 +121,135 @@ conda activate vortec
 
 # 3. Install Python dependencies
 pip install -r requirements.txt
+#    Optional: flash-attention for faster inference.
+#    wan/modules/attention.py degrades gracefully when it is absent.
+pip install flash-attn --no-build-isolation
 
-# 4. Download the Wan2.1-1.3B foundation flow weights from
-#    https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B
-#    and place them under ./checkpoints/Wan2.1-T2V-1.3B/
+# 4. Download the Wan2.1-1.3B foundation model (backbone + VAE)
+pip install "huggingface_hub[cli]"
+huggingface-cli download Wan-AI/Wan2.1-T2V-1.3B \
+    --local-dir ./checkpoints/Wan2.1-T2V-1.3B
 
-# 5.TBD
+# 5. Place the VoRTeC codec checkpoint under ./checkpoints/vortec/
+#    (see "Checkpoints" below for the required state-dict keys)
+
+# 6. Prepare the YUV test sets under ./datasets/
+#    (see "Dataset Preparation" below for the expected layout)
 ```
 
-> **Hardware** &nbsp; A single NVIDIA GPU with ≥ 24 GB memory (we develop on an A6000 / A800) is sufficient for evaluation. Full training fits on a single 48 GB GPU.
+> **Hardware** &nbsp; A single NVIDIA GPU with ≥ 24 GB memory (we develop on an A6000 / A800) is sufficient for evaluation.
 
+## 📦 Checkpoints
 
+| Component | Expected path | Source |
+|---|---|---|
+| Wan2.1-1.3B DiT (flow backbone) | `./checkpoints/Wan2.1-T2V-1.3B/` | ✅ [🤗 Wan-AI/Wan2.1-T2V-1.3B](https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B) |
+| Wan2.1 VAE (3D causal VAE) | `./checkpoints/Wan2.1-T2V-1.3B/Wan2.1_VAE.pth` | ✅ same repo as above |
+| **VoRTeC codec checkpoint** | `./checkpoints/vortec/VoRTeC_xxx.pt` | ✅  **https://pan.quark.cn/s/8c6b4ee35b40?pwd=yHcg** |
+| Text context tensor | `./checkpoints/txt_context_tensor.pt` | ✅ bundled in this repository |
+
+**About `txt_context_tensor.pt`.** This is a pre-baked T5 text embedding (shape `[43, 4096]`, `bfloat16`) for the fixed conditioning prompt. Shipping it lets you run inference **without** loading the T5 text encoder, saving both VRAM and time. It is loaded once and reused across all videos.
+
+## 🗂️ Dataset Preparation
+
+Place the raw `.yuv` files under a root directory (default `./datasets`, configurable via `dataset_root` in the YAML):
+
+```
+datasets/
+├── UVG/                       # 1920x1080, yuv420p, 8-bit
+│   ├── Beauty_1920x1080_120fps_420_8bit_YUV.yuv
+│   └── ...
+├── HEVC-B/                    # 1920x1080, yuv420p, 8-bit
+│   ├── BasketballDrive_1920x1080_50.yuv
+│   └── ...
+├── MCL/                       # 1920x1080, yuv420p, 8-bit
+│   └── *.yuv
+└── HEVC-C/                    # 832x480, yuv420p, 8-bit
+    └── *.yuv
+```
+
+| `dataset_name` | Sub-directory | Resolution |
+|---|---|---|
+| `UVG` | `<dataset_root>/UVG` | 1920×1080 |
+| `HEVC_CLASSB` | `<dataset_root>/HEVC-B` | 1920×1080 |
+| `MCL_JCV` | `<dataset_root>/MCL` | 1920×1080 |
+| `HEVC_CLASSC` | `<dataset_root>/HEVC-C` | 832×480 |
+
+> ⚠️ The loader scans **only one level deep** (`<dir>/*.yuv`, non-recursive) and expects planar `yuv420p`, 8-bit input whose geometry **exactly matches** the table above — a mismatch will silently read the wrong strides.
+
+## 🚀 Usage
+
+```bash
+# 1. Prepare the YUV test sets       -> ./datasets/
+# 2. Download the checkpoints        -> ./checkpoints/
+# 3. Edit every path in test_codec_config.yaml to match your setup
+python test_codec.py --config test_codec_config.yaml
+# Only inference for bpp and reconstructed videos is supported at present; the encoding and decoding functionalities will be released later.
+```
+
+### Configuration reference (`test_codec_config.yaml`)
+
+| Field | Required | Default | Description |
+|---|---|---|---|
+| `dataset_name` | ✅ | — | One of `UVG`, `HEVC_CLASSB`, `MCL_JCV`, `HEVC_CLASSC` |
+| `dataset_root` | — | `./datasets` | Root directory holding the per-dataset YUV sub-folders |
+| `ckpt_path` | ✅ | — | VoRTeC codec checkpoint file (takes precedence over `ckpt_dir`) |
+| `ckpt_dir` | — | `null` | Directory to auto-search `best.pt` in |
+| `model_name` | — | `null` | Tag used in output filenames; inferred from the checkpoint path when `null` |
+| `vae_path` | ✅ | — | Wan2.1 VAE weights (`.pth`) |
+| `flow_model_path` | ✅ | — | Wan2.1-1.3B DiT directory (diffusers format) |
+| `context_path` | ✅ | — | Text-context tensor; use the bundled `./txt_context_tensor.pt` |
+| `num_pred_groups` | ✅ | — | Number of P-groups per meta-group; a meta-group is `9 + 8 × num_pred_groups` frames (paper uses `2` → 25 frames) |
+| `output_dir` | ✅ | — | Directory for decoded tensors and videos |
+| `device` | ✅ | — | e.g. `cuda` |
+| `use_lora` | — | `false` | Enable VoRTeC⁺ (checkpoint must contain `flow_lora_state_dict`) |
+| `lora_rank` | — | `8` | LoRA rank (only when `use_lora: true`) |
+| `lora_alpha` | — | `1.0` | LoRA scaling (only when `use_lora: true`) |
+| `save_video` | — | `false` | Also export a reconstructed `.mp4` |
+| `video_save_idx` | — | `0` | Which video index to export (only when `save_video: true`) |
+| `use_ain` | — | `false` | Apply adaptive instance normalization for colour alignment |
+
+## 📁 Repository Structure
+
+```
+VoTec-video-compression/
+├── test_codec.py               # Entry point: config -> dataset -> models -> per-group decode
+├── test_codec_config.yaml      # The only configuration file
+├── codec_utils.py              # FSE, CGG caches, dataset factory, model loading, decode_group
+├── txt_context_tensor.pt       # Pre-baked T5 text context (43 x 4096, bfloat16)
+├── requirements.txt
+├── LICENSE
+│
+├── Vtc_compressor/             # Latent Codec
+│   ├── new_igc.py              #   LatentCodec (I-Group / P-Group)
+│   ├── ckbd.py                 #   Checkerboard entropy context
+│   ├── compressor_module.py    #   Convolution / feature-extractor blocks
+│   └── module/
+│       ├── layers.py           #   Depthwise residual blocks, sub-pixel convs
+│       └── stream_helper.py    #   Padding and state-dict helpers
+│
+├── Vtc_module/                 # Generative prior modules
+│   ├── Prior_refinement.py     #   FPMF (Prior_refine_DIT)
+│   └── lora.py                 #   VoRTeC+ LoRA injection / extraction
+│
+├── Vtc_utils/                  # Utilities
+│   ├── yuv_video_dataset.py    #   Raw YUV reader -> RGB tensor dataset
+│   ├── utils_tool.py           #   AIN colour alignment, quantization, distributions
+│   └── video_metrics_test.py   #   PSNR / LPIPS / DISTS / FloLPIPS wrappers
+│
+├── wan/                        # Upstream Wan2.1 (Apache-2.0)
+├── compressai/                 # Upstream CompressAI (BSD-3-Clause-Clear)
+└── assets/                     # Figures used in this README
+```
+
+## 🙏 Acknowledgements
+
+This project builds on the following outstanding open-source work:
+
+- **[Wan2.1](https://github.com/Wan-Video/Wan2.1)** — the video-native flow-matching foundation model that powers VoRTeC (Apache-2.0).
+- **[CompressAI](https://github.com/InterDigitalInc/CompressAI)** — entropy models, transforms and arithmetic-coding primitives (BSD-3-Clause-Clear).
+
+We sincerely thank the authors of these works for open-sourcing their code and models.
 
 ## 📚 Citation
 
