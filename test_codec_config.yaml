@@ -1,0 +1,50 @@
+# ============================================================
+# VoRTeC video compression/reconstruction test configuration
+# Usage: python test_codec.py --config test_codec_config.yaml
+# ============================================================
+
+# --------------------- Dataset ---------------------
+# Available options: UVG, HEVC_CLASSB, MCL_JCV, HEVC_CLASSC
+dataset_name: "HEVC_CLASSB"
+# Root directory holding the per-dataset YUV sub-folders.
+# Expected layout: <dataset_root>/HEVC-B/*.yuv
+# Falls back to "./datasets" when omitted or null.
+dataset_root: "./datasets"
+
+# --------------------- Model paths ---------------------
+# Checkpoint directory (auto-searches best.pt); use either this or ckpt_path
+ckpt_dir: null
+# Explicit checkpoint file path (takes precedence over ckpt_dir)
+ckpt_path: "./checkpoints/vortec/VoRTec_plus_xxx.pt"
+# Model name used for output file naming; inferred from path when null
+model_name: null
+
+# --------------------- LoRA configuration ---------------------
+# Whether to apply LoRA to WanFlow (checkpoint must contain flow_lora_state_dict)
+use_lora: true
+# LoRA rank (only effective when use_lora=true)
+lora_rank: 8
+# LoRA alpha (only effective when use_lora=true)
+lora_alpha: 1.0
+
+# --------------------- Auxiliary model paths ---------------------
+vae_path: "./checkpoints/Wan2.1-T2V-1.3B/Wan2.1_VAE.pth"
+flow_model_path: "./checkpoints/Wan2.1-T2V-1.3B/"
+# Text-context tensor shipped with this repository
+context_path: "./checkpoints/txt_context_tensor.pt"
+
+# --------------------- Test parameters ---------------------
+# Number of prediction groups; the key group has 9 frames, each prediction group has 8 frames
+num_pred_groups: 2
+use_ain: true
+# Output directory (decoded tensors and saved videos)
+output_dir: "./evaluation-out/GIT_EVAL"
+
+# --------------------- Video saving ---------------------
+# Whether to save the reconstructed mp4 of the specified video
+save_video: true
+# Which video index to save as mp4 (only effective when save_video=true)
+video_save_idx: 2
+
+# --------------------- Device ---------------------
+device: "cuda"

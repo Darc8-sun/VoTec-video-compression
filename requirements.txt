@@ -1,16 +1,31 @@
 torch>=2.4.0
 torchvision>=0.19.0
 opencv-python>=4.9.0.80
+numpy==1.24.4
 diffusers>=0.31.0
 transformers>=4.49.0
 tokenizers>=0.20.3
 accelerate>=1.1.1
 tqdm
+einops
+pyyaml
 imageio
+imageio-ffmpeg
 easydict
 ftfy
 dashscope
-imageio-ffmpeg
+
+# --- 评测指标 ---
+torchmetrics
+lpips
+DISTS-pytorch
+
+# --- 隐藏硬依赖 ---
+# compressai/__init__.py 会无条件导入 compressai.losses，
+# 而 compressai/losses/rate_distortion.py 里有 `from pytorch_msssim import ms_ssim`。
+# 即使从不调用 loss，缺了它 import 任何 compressai 模块都会失败。
+pytorch_msssim
+
+# --- 可选 ---
+# 缺失时 wan/modules/attention.py 有 try/except 会自动降级，不影响运行
 flash_attn
-gradio>=5.0.0
-numpy==1.24.4
